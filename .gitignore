@@ -1,0 +1,67 @@
+# Node / Next.js
+node_modules/
+.next/
+out/
+.turbo/
+dist/
+build/
+.pnp
+.pnp.js
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+pip-wheel-metadata/
+.ipynb_checkpoints/
+
+# Foundry
+contracts/cache/
+contracts/out/
+contracts/broadcast/*/dry-run/
+contracts/broadcast/**/*-latest.json
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Editors / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+
+# Pipeline artifacts (large data, outputs)
+pipeline/data/raw/
+pipeline/data/cache/
+pipeline/data/outputs/
+pipeline/data/submitted_cache.json
+pipeline/data/*.tif
+pipeline/data/*.tiff
+pipeline/data/*.jp2
+*.parquet
+*.gpkg
+
+# Models / checkpoints
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.ckpt
+
+# Logs
+*.log
+logs/
