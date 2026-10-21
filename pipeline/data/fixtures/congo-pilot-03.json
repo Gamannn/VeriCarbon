@@ -1,0 +1,11 @@
+{
+  "_label": "FIXTURE — synthetic test data, not a real satellite observation; this fixture simulates a FAILED verification where claimed area far exceeds observable vegetation.",
+  "project_id": "congo-pilot-03",
+  "scenes": [
+    {"item_id": "S2A_MSIL2A_20250714T093041_N0511_R136_T33NXG_FIXTURE", "datetime": "2025-07-14T09:30:41Z", "cloud_fraction": 0.09},
+    {"item_id": "S2B_MSIL2A_20250803T093049_N0511_R136_T33NXG_FIXTURE", "datetime": "2025-08-03T09:30:49Z", "cloud_fraction": 0.14}
+  ],
+  "ndvi_mean": 0.18,
+  "ndvi_forest_fraction": 0.21,
+  "estimated_vegetated_area_ha": 110.0
+}

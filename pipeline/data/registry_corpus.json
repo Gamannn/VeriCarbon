@@ -1,0 +1,44 @@
+{
+  "_label": "SYNTHETIC — illustrative registry entries used for duplicate-detection demo. Names resembling real registries are coincidental; no claim is made about any real organization.",
+  "projects": [
+    {
+      "project_id": "VCS-DEMO-1001",
+      "registry": "DemoRegistryA",
+      "registry_ref": "DRA-1001",
+      "name": "Amazon Basin Reforestation Initiative",
+      "organization": "GreenForest Partners",
+      "description": "Native-species reforestation across degraded pasture in the lower Amazon basin.",
+      "polygon": {
+        "type": "Polygon",
+        "coordinates": [[[-60.02, -3.01], [-59.98, -3.01], [-59.98, -2.98], [-60.02, -2.98], [-60.02, -3.01]]]
+      },
+      "area_ha": 480
+    },
+    {
+      "project_id": "GS-DEMO-2001",
+      "registry": "DemoRegistryB",
+      "registry_ref": "DRB-2001",
+      "name": "Kalimantan Peatland Restoration",
+      "organization": "Peatland Alliance",
+      "description": "Rewetting and native canopy restoration on degraded tropical peat.",
+      "polygon": {
+        "type": "Polygon",
+        "coordinates": [[[113.80, -1.52], [113.82, -1.52], [113.82, -1.50], [113.80, -1.50], [113.80, -1.52]]]
+      },
+      "area_ha": 320
+    },
+    {
+      "project_id": "CAR-DEMO-3001",
+      "registry": "DemoRegistryC",
+      "registry_ref": "DRC-3001",
+      "name": "Congo Rainforest Protection Program",
+      "organization": "Central African Forest Trust",
+      "description": "Avoided-deforestation program adjacent to Nouabalé-Ndoki National Park.",
+      "polygon": {
+        "type": "Polygon",
+        "coordinates": [[[16.40, 2.30], [16.44, 2.30], [16.44, 2.33], [16.40, 2.33], [16.40, 2.30]]]
+      },
+      "area_ha": 650
+    }
+  ]
+}

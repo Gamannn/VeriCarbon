@@ -1,0 +1,608 @@
+<title>VeriCarbon Build Plan</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  /* Layout: vertical timeline with expandable day cards, status tracking */
+  :root {
+    --bg: #f8faf8;
+    --fg: #1a2e1a;
+    --surface: #ffffff;
+    --surface-alt: #f0f4f0;
+    --border: #d4ddd4;
+    --accent: #2d7a3a;
+    --accent-soft: #e8f5e9;
+    --accent-dim: #1b5e25;
+    --warn: #c77a00;
+    --warn-soft: #fff3e0;
+    --critical: #c62828;
+    --critical-soft: #fde8e8;
+    --muted: #6b7f6b;
+    --timeline: #b8ccb8;
+    --tag-blockchain: #1565c0;
+    --tag-ai: #6a1b9a;
+    --tag-frontend: #00695c;
+    --tag-docs: #4e342e;
+    --tag-security: #c62828;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1a0e;
+      --fg: #dce8dc;
+      --surface: #1a2a1a;
+      --surface-alt: #223222;
+      --border: #2e4a2e;
+      --accent: #5cb85c;
+      --accent-soft: #1a3a1a;
+      --accent-dim: #8fd68f;
+      --warn: #ffb74d;
+      --warn-soft: #2a2010;
+      --critical: #ef5350;
+      --critical-soft: #2a1010;
+      --muted: #8fa88f;
+      --timeline: #3a5a3a;
+      --tag-blockchain: #64b5f6;
+      --tag-ai: #ce93d8;
+      --tag-frontend: #4db6ac;
+      --tag-docs: #a1887f;
+      --tag-security: #ef5350;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1a0e;
+    --fg: #dce8dc;
+    --surface: #1a2a1a;
+    --surface-alt: #223222;
+    --border: #2e4a2e;
+    --accent: #5cb85c;
+    --accent-soft: #1a3a1a;
+    --accent-dim: #8fd68f;
+    --warn: #ffb74d;
+    --warn-soft: #2a2010;
+    --critical: #ef5350;
+    --critical-soft: #2a1010;
+    --muted: #8fa88f;
+    --timeline: #3a5a3a;
+    --tag-blockchain: #64b5f6;
+    --tag-ai: #ce93d8;
+    --tag-frontend: #4db6ac;
+    --tag-docs: #a1887f;
+    --tag-security: #ef5350;
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    padding-inline: 20px;
+    padding-block: 0;
+    max-width: 780px;
+    margin: 0 auto;
+  }
+
+  .header {
+    padding-block: 32px 24px;
+    border-bottom: 2px solid var(--accent);
+    margin-bottom: 32px;
+  }
+  .header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0 0 4px;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+  .header h1 span { color: var(--accent); }
+  .header .subtitle {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin: 0;
+  }
+
+  .meta-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 16px 0 0;
+  }
+  .meta-chip {
+    font-size: 0.78rem;
+    font-family: var(--font-mono);
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+  }
+  .meta-chip.deadline {
+    background: var(--critical-soft);
+    border-color: var(--critical);
+    color: var(--critical);
+    font-weight: 600;
+  }
+
+  .progress-summary {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 32px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+  }
+  .stat { text-align: center; }
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .never-cut {
+    background: var(--critical-soft);
+    border-left: 3px solid var(--critical);
+    padding: 12px 16px;
+    margin-bottom: 28px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.85rem;
+  }
+  .never-cut strong { color: var(--critical); }
+
+  .phase-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin: 32px 0 12px;
+    padding-left: 28px;
+  }
+
+  .timeline {
+    position: relative;
+    padding-left: 28px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--timeline);
+  }
+
+  .day-card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    transition: border-color 0.15s;
+  }
+  .day-card::before {
+    content: '';
+    position: absolute;
+    left: -24px;
+    top: 20px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--timeline);
+    z-index: 1;
+  }
+  .day-card.done::before {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .day-card.today::before {
+    background: var(--warn);
+    border-color: var(--warn);
+    box-shadow: 0 0 0 3px var(--warn-soft);
+  }
+
+  .day-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .day-header:hover { background: var(--surface-alt); border-radius: 8px; }
+
+  .day-date {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 500;
+    min-width: 62px;
+    color: var(--muted);
+  }
+  .day-title {
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.92rem;
+    min-width: 0;
+  }
+  .day-arrow {
+    font-size: 0.7rem;
+    color: var(--muted);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .day-card.open .day-arrow { transform: rotate(90deg); }
+
+  .day-body {
+    display: none;
+    padding: 0 16px 16px;
+    border-top: 1px solid var(--border);
+  }
+  .day-card.open .day-body { display: block; }
+
+  .task-list { list-style: none; padding: 0; margin: 12px 0 0; }
+  .task-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+  .task-list li::before {
+    content: '▸';
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 6px;
+    border-radius: 3px;
+    vertical-align: middle;
+    margin-right: 2px;
+  }
+  .tag-bc { color: var(--tag-blockchain); background: color-mix(in srgb, var(--tag-blockchain) 12%, transparent); }
+  .tag-ai { color: var(--tag-ai); background: color-mix(in srgb, var(--tag-ai) 12%, transparent); }
+  .tag-fe { color: var(--tag-frontend); background: color-mix(in srgb, var(--tag-frontend) 12%, transparent); }
+  .tag-doc { color: var(--tag-docs); background: color-mix(in srgb, var(--tag-docs) 12%, transparent); }
+  .tag-sec { color: var(--tag-security); background: color-mix(in srgb, var(--tag-security) 12%, transparent); }
+
+  .gate {
+    background: var(--accent-soft);
+    border: 1px dashed var(--accent);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 8px 0 16px 28px;
+    font-size: 0.85rem;
+    position: relative;
+  }
+  .gate::before {
+    content: '⬥';
+    position: absolute;
+    left: -30px;
+    top: 11px;
+    color: var(--accent);
+    font-size: 0.9rem;
+  }
+  .gate strong { color: var(--accent-dim); }
+
+  .cut-order {
+    background: var(--warn-soft);
+    border-left: 3px solid var(--warn);
+    padding: 12px 16px;
+    margin: 24px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.85rem;
+  }
+  .cut-order strong { color: var(--warn); }
+  .cut-order ol {
+    margin: 8px 0 0;
+    padding-left: 18px;
+  }
+  .cut-order li { margin-bottom: 4px; }
+
+  .stack-row {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 4px 12px;
+    font-size: 0.82rem;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .stack-row:last-child { border-bottom: none; }
+  .stack-label { color: var(--muted); font-weight: 500; }
+  .stack-val { font-family: var(--font-mono); font-size: 0.78rem; }
+
+  .section-heading {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 32px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  footer {
+    text-align: center;
+    padding: 24px 0 32px;
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+
+  @media (max-width: 500px) {
+    .progress-summary { grid-template-columns: repeat(2, 1fr); }
+    .day-header { flex-wrap: wrap; }
+    .day-date { min-width: 100%; }
+  }
+</style>
+
+<div class="header">
+  <h1><span>Veri</span>Carbon <span style="font-weight:400;font-size:0.55em;color:var(--muted)">9-Day Sprint</span></h1>
+  <p class="subtitle">Compressed build plan &middot; IEEE ClimateChain Global Hackathon 2026</p>
+  <div class="meta-bar">
+    <span class="meta-chip">Track 1: Carbon Markets</span>
+    <span class="meta-chip">Oct 15 &rarr; Oct 24</span>
+    <span class="meta-chip deadline">Submit Oct 24</span>
+  </div>
+</div>
+
+<div class="progress-summary">
+  <div class="stat">
+    <div class="stat-value" style="color:var(--accent)">9</div>
+    <div class="stat-label">Days Left</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">3</div>
+    <div class="stat-label">Phases</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">2</div>
+    <div class="stat-label">Gates</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">5</div>
+    <div class="stat-label">Never-Cut</div>
+  </div>
+</div>
+
+<div class="never-cut">
+  <strong>Never cut:</strong> On-chain cell claims &middot; Contract tests &middot; Security doc &middot; Demo video &middot; Testnet deployment
+</div>
+
+<h2 class="section-heading">Tech Stack</h2>
+<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:24px">
+  <div class="stack-row"><span class="stack-label">Contracts</span><span class="stack-val">Solidity, Foundry, OpenZeppelin</span></div>
+  <div class="stack-row"><span class="stack-label">Network</span><span class="stack-val">Sepolia (or Base Sepolia)</span></div>
+  <div class="stack-row"><span class="stack-label">Cells</span><span class="stack-val">H3 hexagons (res 9)</span></div>
+  <div class="stack-row"><span class="stack-label">Satellite</span><span class="stack-val">Sentinel-2 L2A via STAC</span></div>
+  <div class="stack-row"><span class="stack-label">Land cover</span><span class="stack-val">ESA WorldCover</span></div>
+  <div class="stack-row"><span class="stack-label">ML / Geo</span><span class="stack-val">scikit-learn, rapidfuzz, shapely, geopandas</span></div>
+  <div class="stack-row"><span class="stack-label">Backend</span><span class="stack-val">Python FastAPI + web3.py</span></div>
+  <div class="stack-row"><span class="stack-label">Frontend</span><span class="stack-val">Next.js + Leaflet + ethers.js</span></div>
+</div>
+
+<h2 class="section-heading">Build Timeline</h2>
+
+<!-- PHASE 1 -->
+<div class="phase-label">Phase 1 &mdash; Foundation (Days 1&ndash;3)</div>
+<div class="timeline">
+
+  <div class="day-card today open" id="d1">
+    <div class="day-header" onclick="toggle('d1')">
+      <span class="day-date">Oct 15</span>
+      <span class="day-title"><span class="tag tag-bc">Blockchain</span> Setup + Smart Contract v0</span>
+      <span class="day-arrow">&#9654;</span>
+    </div>
+    <div class="day-body">
+      <ul class="task-list">
+        <li>Create repo structure: <code>contracts/</code>, <code>pipeline/</code>, <code>backend/</code>, <code>frontend/</code>, <code>docs/</code></li>
+        <li>Initialize Foundry project, install OpenZeppelin</li>
+        <li>Write <code>VeriCarbon.sol</code> &mdash; project registry, cell claims (H3 uint64), roles (submitter, validator, assessor, reviewer), submit + attest functions</li>
+        <li>Write unit tests for submitProject, cell exclusivity</li>
+        <li>Set up Python env: FastAPI, web3.py, shapely, h3, scikit-learn, rapidfuzz</li>
+        <li>Get Sepolia faucet funds, set up deployer wallet</li>
+        <li>Shortlist 3&ndash;4 pilot forest sites + 1 negative control</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="day-card" id="d2">
+    <div class="day-header" onclick="toggle('d2')">
+      <span class="day-date">Oct 16</span>
+      <span class="day-title"><span class="tag tag-bc">Blockchain</span> <span class="tag tag-ai">AI</span> Contract Complete + Satellite Pipeline</span>
+      <span class="day-arrow">&#9654;</span>
+    </div>
+    <div class="day-body">
+      <ul class="task-list">
+        <li>Add 2-of-3 validator attestation, flagProject, resolveFlag, issueClaim</li>
+        <li>Add fuzz tests for cell exclusivity invariant</li>
+        <li>Deploy to Sepolia testnet</li>
+        <li>Build satellite pipeline: STAC fetch for pilot polygons, cloud mask, NDVI composites</li>
+        <li>Download and inspect 2 public registry datasets (Verra/Gold Standard exports)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="day-card" id="d3">
+    <div class="day-header" onclick="toggle('d3')">
+      <span class="day-date">Oct 17</span>
+      <span class="day-title"><span class="tag tag-ai">AI</span> Verification Pipeline + Hashing</span>
+      <span class="day-arrow">&#9654;</span>
+    </div>
+    <div class="day-body">
+      <ul class="task-list">
+        <li>Tree-cover classifier with WorldCover weak labels; change detection; area estimate + confidence score</li>
+        <li>Decision rule: VERIFIED / REQUIRES_REVIEW / REJECT thresholds</li>
+        <li>Hash pipeline: dataset hash (scene IDs + checksums), model hash, result hash</li>
+        <li>Reproducibility script v0 that re-derives the result hash</li>
+        <li>Clean registry exports into common schema</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="gate">
+  <strong>Gate 1 (end of Oct 17):</strong> One project verified end-to-end via scripts, recorded on Sepolia testnet. Reproducibility script works. If missed &rarr; apply cut list immediately.
+</div>
+
+<!-- PHASE 2 -->
+<div class="phase-label">Phase 2 &mdash; Intelligence + Integration (Days 4&ndash;6)</div>
+<div class="timeline">
+
+  <div class="day-card" id="d4">
+    <div class="day-header" onclick="toggle('d4')">
+      <span class="day-date">Oct 18</span>
+      <span class="day-title"><span class="tag tag-ai">AI</span> Entity Resolution + Geospatial</span>
+      <span class="day-arrow">&#9654;</span>
+    </div>
+    <div class="day-body">
+      <ul class="task-list">
+        <li>Build labeled pairs: real negatives + perturbed positives (name abbreviations, shifted polygons, rounded areas)</li>
+        <li>Entity resolution model: blocking by centroid, features (name/org/description similarity, area ratio, centroid distance, overlap), logistic regression baseline</li>
+        <li>Polygon &rarr; H3 cells conversion, overlap percentage, area similarity</li>
+        <li>Combine into duplicate-risk score with tunable weights</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="day-card" id="d5">
+    <div class="day-header" onclick="toggle('d5')">
+      <span class="day-date">Oct 19</span>
+      <span class="day-title"><span class="tag tag-ai">AI</span> <span class="tag tag-bc">Blockchain</span> Evaluate + Backend API</span>
+      <span class="day-arrow">&#9654;</span>
+    </div>
+    <div class="day-body">
+      <ul class="task-list">
+        <li>Evaluate entity resolution: precision, recall, F1, confusion matrix; tune thresholds</li>
+        <li>Save evaluation report with figures (feeds the impact section)</li>
+        <li>Backend API: submit project, run verification pipeline, compute risk, call contract</li>
+        <li>Validator signing scripts</li>
+        <li>Error analysis on entity resolution misses</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="day-card" id="d6">
+    <div class="day-header" onclick="toggle('d6')">
+      <span class="day-date">Oct 20</span>
+      <span class="day-title"><span class="tag tag-bc">Blockchain</span> End-to-End Integration</span>
+      <span class="day-arrow">&#9654;</span>
+    </div>
+    <div class="day-body">
+      <ul class="task-list">
+        <li>End-to-end testnet test: Scenario A (duplicate detected, blocked) + Scenario B (legitimate, approved)</li>
+        <li>Fix integration bugs</li>
+        <li>Feature freeze for core logic</li>
+        <li>Start frontend skeleton: Next.js project, Leaflet map, basic routing</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="gate">
+  <strong>Gate 2 (end of Oct 20):</strong> Core pipeline works from the command line for both scenarios. Feature freeze. If missed &rarr; cut embedding-based similarity and extra demo projects.
+</div>
+
+<!-- PHASE 3 -->
+<div class="phase-label">Phase 3 &mdash; Product + Submit (Days 7&ndash;9)</div>
+<div class="timeline">
+
+  <div class="day-card" id="d7">
+    <div class="day-header" onclick="toggle('d7')">
+      <span class="day-date">Oct 21</span>
+      <span class="day-title"><span class="tag tag-fe">Frontend</span> Dashboard + Demo Screens</span>
+      <span class="day-arrow">&#9654;</span>
+    </div>
+    <div class="day-body">
+      <ul class="task-list">
+        <li>Submission form with polygon drawing on map</li>
+        <li>Verification result page: map, NDVI evidence, confidence, hashes</li>
+        <li>Duplicate-blocked screen: side-by-side comparison, risk score, "registration blocked" state</li>
+        <li>Blockchain record view with Sepolia explorer links</li>
+        <li>Dashboard: projects verified, area verified, duplicates detected, projects flagged</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="day-card" id="d8">
+    <div class="day-header" onclick="toggle('d8')">
+      <span class="day-date">Oct 22</span>
+      <span class="day-title"><span class="tag tag-sec">Security</span> <span class="tag tag-doc">Docs</span> Security + Impact + Docs</span>
+      <span class="day-arrow">&#9654;</span>
+    </div>
+    <div class="day-body">
+      <ul class="task-list">
+        <li>Run Slither on contracts, fix findings</li>
+        <li>Write security &amp; data-integrity assessment (threat model from blueprint section 9)</li>
+        <li>Climate impact assessment: duplicates found, area/tonnes at risk, precision/recall, honest framing</li>
+        <li>Architecture diagram (SVG or Mermaid)</li>
+        <li>README with deployment instructions</li>
+        <li>Clean repo, add related-work section</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="day-card" id="d9">
+    <div class="day-header" onclick="toggle('d9')">
+      <span class="day-date">Oct 23</span>
+      <span class="day-title"><span class="tag tag-doc">Docs</span> Video + Polish + Submit Early</span>
+      <span class="day-arrow">&#9654;</span>
+    </div>
+    <div class="day-body">
+      <ul class="task-list">
+        <li>Rehearse and record 3-min demo video (problem &rarr; architecture &rarr; legitimate case &rarr; duplicate blocked &rarr; trust &rarr; impact)</li>
+        <li>Final UI polish, fix any broken flows</li>
+        <li>Complete Devpost submission: all fields, links, description</li>
+        <li>Verify every link from a logged-out browser</li>
+        <li>Submit on Devpost</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div style="background:var(--accent-soft);border:1px solid var(--accent);border-radius:8px;padding:14px 16px;margin:20px 0 20px 28px;font-size:0.85rem">
+  <strong style="color:var(--accent-dim)">Oct 24 &mdash; Buffer day.</strong> No new work. Fix only what is broken. Deadline is Oct 25, 11:59 PM UTC.
+</div>
+
+<div class="cut-order">
+  <strong>If you fall behind, cut in this order:</strong>
+  <ol>
+    <li>Dashboard stats beyond basics &rarr; use static seeded values</li>
+    <li>Embedding-based similarity &rarr; fall back to string similarity</li>
+    <li>Three real validators &rarr; two scripted validators, threshold 2/2</li>
+    <li>More than two demo projects &rarr; keep one legitimate + one duplicate</li>
+  </ol>
+</div>
+
+<h2 class="section-heading">Daily Rhythm</h2>
+<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;font-size:0.88rem;display:flex;flex-direction:column;gap:10px">
+  <div><strong style="color:var(--accent)">Start (10 min):</strong> Pick 1&ndash;3 outcomes for today. Write them in the log.</div>
+  <div><strong style="color:var(--accent)">Build:</strong> Focus on the day's deliverables. Commit often on feature branches.</div>
+  <div><strong style="color:var(--accent)">End (10 min):</strong> Commit and push. Note done / blocked / tomorrow's first task.</div>
+  <div><strong style="color:var(--accent)">Rule:</strong> <code>main</code> is always demo-able. Merge when a task works end-to-end.</div>
+</div>
+
+<footer>
+  VeriCarbon &middot; IEEE ClimateChain Global Hackathon 2026 &middot; Track 1
+</footer>
+
+<script>
+  function toggle(id) {
+    document.getElementById(id).classList.toggle('open');
+  }
+</script>

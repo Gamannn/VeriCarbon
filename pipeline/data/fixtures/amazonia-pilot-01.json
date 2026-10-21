@@ -1,0 +1,12 @@
+{
+  "_label": "FIXTURE — synthetic test data, not a real satellite observation",
+  "project_id": "amazonia-pilot-01",
+  "scenes": [
+    {"item_id": "S2A_MSIL2A_20250812T140051_N0511_R067_T20LLP_FIXTURE", "datetime": "2025-08-12T14:00:51Z", "cloud_fraction": 0.08},
+    {"item_id": "S2B_MSIL2A_20250902T140049_N0511_R067_T20LLP_FIXTURE", "datetime": "2025-09-02T14:00:49Z", "cloud_fraction": 0.12},
+    {"item_id": "S2A_MSIL2A_20250917T140051_N0511_R067_T20LLP_FIXTURE", "datetime": "2025-09-17T14:00:51Z", "cloud_fraction": 0.05}
+  ],
+  "ndvi_mean": 0.72,
+  "ndvi_forest_fraction": 0.86,
+  "estimated_vegetated_area_ha": 442.0
+}
