@@ -25,8 +25,9 @@ export function ChainPanel({ onchain, attest, proj, dup }: Props) {
   if (!onchain)
     return <p className="text-sm text-muted-foreground">Awaiting on-chain submission.</p>
 
-  if (onchain.data?.error) {
-    const rawErr = onchain.data.error
+  const errorMsg = onchain.data?.error || onchain.data?.detail
+  if (errorMsg && typeof errorMsg === "string" && errorMsg.includes("0x5bfccfba")) {
+    const rawErr = errorMsg
     const selMatch = rawErr.match(/0x5bfccfba([0-9a-f]{64})?([0-9a-f]{64})?/i)
     const cell = selMatch?.[1] ? "0x" + selMatch[1].replace(/^0+/, "") : null
     const owner = selMatch?.[2] ? "0x" + selMatch[2] : null
@@ -89,12 +90,15 @@ export function ChainPanel({ onchain, attest, proj, dup }: Props) {
   }
 
   if (!onchain.ok && !onchain.data?.tx) {
+    const detail = onchain.data?.detail || onchain.data?.error || ""
+    const isRevert = typeof detail === "string" && detail.toLowerCase().includes("revert")
     return (
       <div className="space-y-2 text-sm">
-        <Badge variant="warning">Chain not configured</Badge>
+        <Badge variant={isRevert ? "danger" : "warning"}>
+          {isRevert ? "Transaction failed" : "Chain not configured"}
+        </Badge>
         <p className="text-muted-foreground">
-          {onchain.data?.detail ||
-            "Set RPC_URL, CONTRACT_ADDRESS, BACKEND_PRIVATE_KEY in backend/.env."}
+          {detail || "Set RPC_URL, CONTRACT_ADDRESS, BACKEND_PRIVATE_KEY in backend/.env."}
         </p>
       </div>
     )

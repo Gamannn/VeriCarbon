@@ -8,9 +8,12 @@ import { VerificationPanel } from "@/components/VerificationPanel"
 import { DuplicatePanel } from "@/components/DuplicatePanel"
 import { ChainPanel } from "@/components/ChainPanel"
 import { PipelineSteps } from "@/components/PipelineSteps"
-import { latLngsToGeoJSON } from "@/lib/geo"
+import { ResultsDashboard } from "@/components/ResultsDashboard"
+import { SubmissionHistory, type HistoryEntry } from "@/components/SubmissionHistory"
+import { useTheme } from "@/lib/useTheme"
+import { latLngsToGeoJSON, polygonAreaHa } from "@/lib/geo"
 import { postJson, getJson } from "@/lib/api"
-import { Leaf, Plus, Satellite, Search, Link, CheckCircle2, Terminal } from "lucide-react"
+import { Leaf, Plus, Satellite, Search, Link, CheckCircle2, Terminal, Sun, Moon } from "lucide-react"
 import type {
   SubmissionForm as FormData,
   LatLng,
@@ -32,7 +35,17 @@ const DEFAULT_FORM: FormData = {
   claimed_area_ha: "",
 }
 
+function loadHistory(): HistoryEntry[] {
+  try {
+    return JSON.parse(localStorage.getItem("vericarbon-history") || "[]")
+  } catch { return [] }
+}
+function saveHistory(h: HistoryEntry[]) {
+  try { localStorage.setItem("vericarbon-history", JSON.stringify(h.slice(0, 20))) } catch {}
+}
+
 export default function App() {
+  const { theme, toggle: toggleTheme } = useTheme()
   const [form, setForm] = useState(DEFAULT_FORM)
   const [polygon, setPolygon] = useState<LatLng[] | null>(null)
   const [drawingMode, setDrawingMode] = useState<"idle" | "drawing">("idle")
@@ -49,6 +62,7 @@ export default function App() {
   const [log, setLog] = useState<string[]>([])
   const [running, setRunning] = useState(false)
   const [autoFlow, setAutoFlow] = useState(true)
+  const [history, setHistory] = useState<HistoryEntry[]>(loadHistory)
 
   const onPolygonChange = useCallback((c: LatLng[]) => {
     setPolygon(c)
@@ -94,9 +108,9 @@ export default function App() {
     setForm({
       project_id: `demo-${t.id}-${Date.now().toString(36)}`,
       name: t.name,
-      organization: "Demo Submitter",
-      description: "Loaded from example — click Submit to run the pipeline.",
-      claimed_area_ha: "400",
+      organization: t.org,
+      description: t.desc,
+      claimed_area_ha: t.area,
     })
     const latSum = latlngs.reduce((s, p) => s + p[0], 0)
     const lngSum = latlngs.reduce((s, p) => s + p[1], 0)
@@ -113,12 +127,32 @@ export default function App() {
     return null
   }
 
+  function addHistory(entry: HistoryEntry) {
+    setHistory((prev) => {
+      const next = [entry, ...prev].slice(0, 20)
+      saveHistory(next)
+      return next
+    })
+  }
+
   async function runPipeline() {
     const err = validate()
     if (err) {
       alert(err)
       return
     }
+
+    const drawnArea = polygonAreaHa(polygon!)
+    const claimed = parseFloat(form.claimed_area_ha)
+    if (claimed > 0 && drawnArea > 0 && claimed > drawnArea * 2) {
+      const proceed = window.confirm(
+        `Area mismatch: you claimed ${claimed.toFixed(1)} ha but the drawn polygon covers only ~${drawnArea.toFixed(1)} ha.\n\n` +
+        `The claimed area is ${(claimed / drawnArea).toFixed(1)}x larger than the selected region.\n\n` +
+        `Press OK to submit anyway, or Cancel to go back and correct it.`
+      )
+      if (!proceed) return
+    }
+
     setRunning(true)
     resetResults()
     const body = {
@@ -130,6 +164,15 @@ export default function App() {
       claimed_area_ha: parseFloat(form.claimed_area_ha),
       registry_refs: [],
     }
+
+    let vOutcome: VerificationResult["outcome"] | null = null
+    let dRisk: DuplicateResult["highest_risk_level"] | null = null
+    let chainResult: HistoryEntry["chainResult"] = "skipped"
+    let txHash: string | null = null
+    let confidencePct: number | null = null
+    let cellCount: number | null = null
+    let finalState: string | null = null
+
     try {
       setLog((l) => [...l, "→ Running satellite verification…"])
       const v = await postJson<VerificationResult>("/verify", body)
@@ -138,6 +181,8 @@ export default function App() {
           (v.data as unknown as { detail?: string }).detail || `verify ${v.status}`
         )
       setVerify(v.data)
+      vOutcome = v.data.outcome
+      confidencePct = v.data.confidence_bps / 100
       setLog((l) => [
         ...l,
         `✓ Verification: ${v.data.outcome} @ ${(v.data.confidence_bps / 100).toFixed(1)}% (${v.data.mode})`,
@@ -150,6 +195,7 @@ export default function App() {
           (d.data as unknown as { detail?: string }).detail || `duplicate-check ${d.status}`
         )
       setDup(d.data)
+      dRisk = d.data.highest_risk_level
       setLog((l) => [
         ...l,
         `✓ Duplicate scan: highest ${d.data.highest_risk_level} across ${d.data.matches.length} match(es)`,
@@ -159,7 +205,10 @@ export default function App() {
       const sub = await postJson<OnchainResult["data"]>("/onchain/submit", body)
       const onchainResult: OnchainResult = { ok: sub.ok, data: sub.data }
       setOnchain(onchainResult)
+      cellCount = sub.data?.cell_count ?? null
       if (!sub.ok || sub.data?.error) {
+        const errMsg = sub.data?.error || sub.data?.detail || ""
+        chainResult = typeof errMsg === "string" && errMsg.includes("0x5bfccfba") ? "rejected" : "failed"
         setLog((l) => [
           ...l,
           `✗ Submit blocked: ${sub.data?.error ? "contract reverted" : sub.data?.detail || "chain error"}`,
@@ -168,6 +217,8 @@ export default function App() {
         reloadLists()
         return
       }
+      chainResult = "submitted"
+      txHash = sub.data.tx!.tx_hash
       setLog((l) => [
         ...l,
         `✓ On-chain submit tx 0x${sub.data.tx!.tx_hash.slice(0, 16)}… (${sub.data.cell_count} cells)`,
@@ -195,6 +246,7 @@ export default function App() {
       )
       if (p.ok) {
         setProj(p.data)
+        finalState = p.data.state
         setLog((l) => [...l, `✓ On-chain state: ${p.data.state}`])
       }
       reloadLists()
@@ -202,6 +254,20 @@ export default function App() {
       setLog((l) => [...l, `✗ ${(e as Error).message}`])
     } finally {
       setRunning(false)
+      addHistory({
+        id: `${body.project_id}-${Date.now()}`,
+        projectId: body.project_id,
+        name: body.name,
+        organization: body.organization,
+        timestamp: Date.now(),
+        outcome: vOutcome,
+        riskLevel: dRisk,
+        chainResult,
+        txHash,
+        confidencePct,
+        cellCount,
+        state: finalState,
+      })
     }
   }
 
@@ -246,19 +312,20 @@ export default function App() {
             </div>
             <div>
               <h1 className="text-lg font-bold leading-tight">VeriCarbon</h1>
-              <p className="text-xs text-muted-foreground leading-tight">
-                AI + Blockchain Carbon Credit Verification
+              <p className="text-[11px] text-muted-foreground leading-tight">
+                Satellite-verified carbon credits with on-chain duplicate prevention
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {chainStatus && (
               <Badge variant={chainStatus.configured ? "success" : "muted"}>
-                {chainStatus.configured
-                  ? `chain ${chainStatus.chain_id} · ${chainStatus.contract_address?.slice(0, 10)}…`
-                  : "chain not configured"}
+                {chainStatus.configured ? "Sepolia connected" : "chain not configured"}
               </Badge>
             )}
+            <Button variant="ghost" size="sm" onClick={toggleTheme} className="h-9 w-9 p-0">
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
             <Button variant="outline" size="sm" onClick={newSubmission}>
               <Plus className="h-4 w-4 mr-1.5" />
               New submission
@@ -267,9 +334,9 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto p-4 sm:p-6">
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="space-y-4">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+        <div className="grid gap-3 lg:grid-cols-2 items-start">
+          <div className="space-y-3 lg:sticky lg:top-[4.5rem]">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-base">
@@ -296,7 +363,7 @@ export default function App() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="overflow-hidden">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">2 &middot; Project details</CardTitle>
               </CardHeader>
@@ -328,7 +395,7 @@ export default function App() {
             </Card>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">3 &middot; Pipeline progress</CardTitle>
@@ -436,10 +503,17 @@ export default function App() {
                 </pre>
               </CardContent>
             </Card>
+
+            <SubmissionHistory
+              history={history}
+              onClear={() => { setHistory([]); saveHistory([]) }}
+            />
           </div>
         </div>
 
-        <footer className="mt-8 pb-4 text-xs text-muted-foreground border-t pt-4">
+        <ResultsDashboard verify={verify} dup={dup} onchain={onchain} proj={proj} />
+
+        <footer className="mt-4 pb-4 text-xs text-muted-foreground border-t pt-4">
           <p>
             Satellite results labeled{" "}
             <code className="bg-muted px-1 py-0.5 rounded text-[11px]">synthetic</code> are

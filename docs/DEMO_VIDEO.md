@@ -1,77 +1,134 @@
-# Demo Video Outline
+# Demo Video Script
 
-Target runtime: 3 minutes. Record at 1080p, voice-over.
+Target runtime: **3–5 minutes**. Record at 1080p with voice-over.
+
+---
+
+## Pre-recording checklist
+
+1. Backend running: `cd backend && uvicorn app:app --port 8000`
+2. Frontend running: `cd frontend && npm run dev` → open http://localhost:5174
+3. Switch to **dark mode** (click the moon icon in the header) — reads better on video
+4. Clear submission history (trash icon) so it starts empty
+5. Bump terminal font to 18pt+ if showing terminal
+
+---
 
 ## Shot list
 
-**00:00 — 00:15. The problem.**
-> "A single ton of CO₂ cannot be sold twice, yet the voluntary carbon market
-> keeps registering overlapping forest projects across different registries.
-> VeriCarbon makes that impossible — not by a scoring heuristic, but by a
-> smart contract."
+### 00:00 – 00:20 · The problem
 
-Show the dashboard header + one sentence.
+Show the full dashboard — header reads:
+> **VeriCarbon** — Satellite-verified carbon credits with on-chain duplicate prevention
 
-**00:15 — 00:50. Scenario A: a legitimate project goes through.**
+Voice-over:
+> "Voluntary carbon markets have a trust problem: the same forest can be
+> registered as a carbon offset on multiple registries. VeriCarbon solves this
+> with satellite verification and an Ethereum smart contract that makes
+> double-claiming physically impossible."
 
-Click **Scenario A** → **Run full pipeline**. On screen:
-- Verification completes with 79.81% confidence over 442 ha.
-- Duplicate scan returns MEDIUM (polygon overlaps the one entry we have).
-- On-chain submit succeeds, 133 cells claimed.
-- Attestations post, project ends in **Issued** state with real tx hashes.
+Point at the header badge "Sepolia connected" → this is a live blockchain.
 
-Narrate the three provenance hashes (dataset / model / result) and point at
-them in the UI.
+---
 
-**00:50 — 01:35. Scenario B: the renamed duplicate.**
+### 00:20 – 01:15 · Scenario 1: Clean pass (East Africa)
 
-Click **Scenario B**. Walk through:
-- Different name, different organization, slightly smaller polygon.
-- The off-chain duplicate scan flags it MEDIUM — 100% cell overlap, name
-  similarity near zero.
-- Press **Run full pipeline**. Submit fails.
-- Zoom into the **"BLOCKED BY CONTRACT"** screen. Point at the
-  `CellAlreadyClaimed(cell, owner)` revert data.
+1. Click **Examples** tab → **Fresh land in East Africa**
+2. Form auto-fills. Point out: project ID, name, area.
+3. Click **Submit for verification**
+4. Walk through each pipeline step as it completes:
+   - **Satellite verification**: VERIFIED badge, confidence %, NDVI stats
+   - **Duplicate check**: LOW risk — no overlapping registry entries
+   - **On-chain submit**: cells claimed, tx hash appears
+   - **Attestation**: auto-posted, tx hash
+   - **State**: Pending (1 of 2 attestations)
+5. Scroll to **Analytics Dashboard** — point out:
+   - Outcome donut + confidence gauge
+   - NDVI vegetation bar chart
+   - Area comparison (claimed vs vegetated)
+   - Risk distribution pie — all green
+   - "No significant overlap" in similarity panel
+   - Gas & cell metrics
+6. Note the entry in **Recent Submissions** with green badges
 
-> "Even though the project is renamed, re-organized, and smaller, the
-> contract refuses to assign the first already-claimed cell. That is the
-> on-chain guarantee."
+> "A legitimate project sails through — satellite confirms vegetation,
+> no duplicates found, and the contract accepts the claim."
 
-**01:35 — 02:15. Under the hood.**
+---
 
-Switch to a terminal split-screen with:
-```
-forge test -vvv
-```
-Show the 22 tests passing. Freeze on `testFuzz_submitNeverCreatesOverlap`.
-Then switch to:
-```
-pytest pipeline/tests backend/tests -q
-```
-17 + 6 = 23 tests pass.
+### 01:15 – 02:15 · Scenario 2: Duplicate rejection (Amazonia overlap)
 
-Mention the three provenance hashes, point at `pipeline/satellite.py`
-(fixture labeling, canonical JSON hashing).
+1. Click **New submission** (top right)
+2. Click **Examples** tab → **Overlapping with Amazonia registry**
+3. Click **Submit for verification**
+4. Walk through:
+   - **Satellite verification**: VERIFIED — the land itself is fine
+   - **Duplicate check**: HIGH risk — overlaps existing Amazonia entry
+   - **On-chain submit**: **REJECTED — Duplicate land claim**
+5. Zoom into the rejection alert:
+   - `CellAlreadyClaimed` revert selector
+   - Conflicting H3 cell ID
+   - Owning project hash
+   - Off-chain corroboration from the duplicate scan
+6. Scroll to dashboard — radar chart now shows similarity fingerprint
+   (high spatial overlap, cell overlap)
 
-**02:15 — 02:45. Honest limitations.**
+> "Even though this is a new project with a different name, the smart
+> contract refuses it because the H3 cells are already claimed. This is
+> enforced on-chain — no registry cooperation needed."
 
-Over the dashboard footer:
-> "VeriCarbon doesn't quantify tonnes of CO₂, doesn't prove additionality,
-> and doesn't replace a registry. It is integrity infrastructure for the
-> two failures a buyer actually feels: duplicates and unreproducible MRV."
+---
 
-Flash `docs/KNOWN_LIMITATIONS.md` in the editor for a beat.
+### 02:15 – 02:50 · Scenario 3: Medium risk (Kalimantan)
 
-**02:45 — 03:00. Call to action.**
+1. Click **New submission**
+2. Click **Examples** tab → **Near Kalimantan peat registry**
+3. Click **Submit for verification**
+4. Point out:
+   - Duplicate check returns MEDIUM risk — nearby but not overlapping
+   - On-chain submit **succeeds** — cells are different
+   - Dashboard shows medium-risk amber in the pie chart
 
-> "Code at github.com/<your-handle>/VeriCarbon. Deployed on Sepolia at
-> <address>. Thanks."
+> "The system flags the proximity but doesn't block it — the cells
+> don't overlap, so the contract allows it. Risk information is
+> preserved for human review."
 
-## Recording notes
+---
 
-- Use a dark macOS appearance to show the dashboard's dark-theme tokens.
-- Keep the terminal font size large (18pt+); the on-screen text is the
-  message.
-- Do NOT edit the on-chain tx hashes or dashboard numbers. Every value
-  comes from a real run. If a run fails during recording, retake rather
-  than paste.
+### 02:50 – 03:30 · Architecture & transparency
+
+Show the **Recent Submissions** panel — all three runs visible with badges.
+
+Toggle to **light mode** to show theming works.
+
+Voice-over:
+> "Under the hood: a FastAPI backend runs satellite analysis using
+> synthetic NDVI data — in production this connects to Sentinel-2.
+> Duplicate detection uses H3 hexagonal cells at resolution 7 for
+> precise spatial comparison. The Solidity contract on Sepolia
+> enforces uniqueness — two validators must attest before a credit
+> is issued."
+
+Point at the footer disclaimer:
+> "We're transparent: satellite results are labeled synthetic, and
+> registry entries are a demo corpus. VeriCarbon is integrity
+> infrastructure, not a replacement for a full MRV pipeline."
+
+---
+
+### 03:30 – 03:50 · Wrap up
+
+> "VeriCarbon — satellite-verified, blockchain-enforced carbon credit
+> integrity. Built for IEEE ClimateChain 2026, Track 1.
+> Code at github.com/your-handle/VeriCarbon. Thank you."
+
+---
+
+## Recording tips
+
+- Click each example template deliberately — pause 1 second before clicking Submit
+- Let each pipeline step complete before narrating it
+- The pipeline log at the bottom shows real-time progress — good to have visible
+- All tx hashes and values come from live Sepolia runs — don't edit them
+- If a run fails during recording, click New submission and retake that scenario
+- Total should land between 3–5 minutes; don't rush
