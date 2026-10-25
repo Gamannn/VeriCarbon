@@ -104,20 +104,6 @@ forge script script/Deploy.s.sol \
   --verify  # optional, needs ETHERSCAN_API_KEY
 ```
 
-Record the deployed address, deployment transaction hash, and the Etherscan
-URL in `docs/DEPLOYMENT.md` when the deploy succeeds.
-
-## Judging-criteria map
-
-| Criterion | Weight | Where in the repo |
-|---|---|---|
-| Climate impact | 30% | [`docs/CLIMATE_IMPACT_ASSESSMENT.md`](./docs/CLIMATE_IMPACT_ASSESSMENT.md), end-to-end Scenario B blocking a duplicate |
-| Blockchain implementation | 30% | [`contracts/src/VeriCarbon.sol`](./contracts/src/VeriCarbon.sol), 22 passing tests, fuzz test, deploy script, model-provenance hashes |
-| Feasibility / quality | 10% | Three layers of tests (contract, pipeline, API), reproducible setup, `docs/demo_run.json` |
-| Security / transparency | 10% | [`docs/SECURITY_ASSESSMENT.md`](./docs/SECURITY_ASSESSMENT.md), AccessControl, revert-on-status-0 handling in `backend/chain.py` |
-| UX / design | 10% | [`frontend/index.html`](./frontend/index.html) — real pipeline calls, Leaflet map, duplicate-blocked screen |
-| Scalability / sustainability | 10% | H3 resolution-9 trade-off, off-chain bulk data split, cell-count gas scaling discussed in [`docs/EVALUATION_REPORT.md`](./docs/EVALUATION_REPORT.md) |
-
 ## Not a replacement for an accredited registry
 
 VeriCarbon does not quantify tonnes of CO₂, does not address additionality,
