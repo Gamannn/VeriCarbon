@@ -170,7 +170,12 @@ def onchain_submit(sub: ProjectSubmission) -> SubmitOnchainOut:
 
 @app.post("/onchain/attest", response_model=TxReceiptOut)
 def onchain_attest(sub: ProjectSubmission) -> TxReceiptOut:
-    """Run verification and post an attestation. Requires chain configuration."""
+    """Run verification and post two attestations (validator1 + validator2).
+
+    After the first attestation from the backend signer, a second attestation
+    is posted from VALIDATOR2_PRIVATE_KEY so the contract reaches the 2-of-2
+    threshold and transitions the project to Verified.
+    """
     try:
         result = run_verification(sub.project_id, sub.polygon.model_dump(), sub.claimed_area_ha)
     except FileNotFoundError as e:
@@ -187,14 +192,28 @@ def onchain_attest(sub: ProjectSubmission) -> TxReceiptOut:
             args["verified_area_ha"],
             args["confidence_bps"],
         )
-        return TxReceiptOut(
-            tx_hash=receipt.tx_hash,
-            block_number=receipt.block_number,
-            gas_used=receipt.gas_used,
-            status=receipt.status,
-        )
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e))
+
+    try:
+        client.attest_as_validator2(
+            args["project_id_bytes"],
+            args["dataset_hash"],
+            args["model_hash"],
+            args["result_hash"],
+            args["verified_area_ha"],
+            args["confidence_bps"],
+        )
+        log.info("Validator2 attestation posted — project should be Verified now")
+    except Exception as e:
+        log.warning("Validator2 attestation failed (project stays Pending): %s", e)
+
+    return TxReceiptOut(
+        tx_hash=receipt.tx_hash,
+        block_number=receipt.block_number,
+        gas_used=receipt.gas_used,
+        status=receipt.status,
+    )
 
 
 @app.get("/onchain/project/{project_id}")

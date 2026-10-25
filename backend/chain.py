@@ -155,6 +155,56 @@ class ChainClient:
             )
         )
 
+    def grant_validator_role(self, address: str) -> TxReceipt:
+        self._require()
+        role = self.w3.keccak(text="VALIDATOR_ROLE")
+        return self._send(
+            self.contract.functions.grantRole(role, Web3.to_checksum_address(address))
+        )
+
+    def attest_as_validator2(
+        self,
+        project_id: bytes,
+        dataset_hash: bytes,
+        model_hash: bytes,
+        result_hash: bytes,
+        verified_area_ha: int,
+        confidence_bps: int,
+    ) -> TxReceipt:
+        self._require()
+        s = get_settings()
+        if not s.validator2_private_key:
+            raise RuntimeError("VALIDATOR2_PRIVATE_KEY not configured")
+        account2 = Account.from_key(s.validator2_private_key)
+        fn = self.contract.functions.attestVerification(
+            project_id, dataset_hash, model_hash, result_hash,
+            verified_area_ha, confidence_bps,
+        )
+        tx = fn.build_transaction({
+            "from": account2.address,
+            "nonce": self.w3.eth.get_transaction_count(account2.address),
+            "chainId": s.chain_id,
+            "gas": 30_000_000,
+        })
+        signed = account2.sign_transaction(tx)
+        tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
+        receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+        if receipt.status != 1:
+            try:
+                self.w3.eth.call(
+                    {k: tx[k] for k in ("from", "to", "data", "value", "gas") if k in tx},
+                    block_identifier=receipt.blockNumber,
+                )
+            except Exception as e:
+                raise RuntimeError(f"Validator2 attest reverted: {e}") from None
+            raise RuntimeError(f"Validator2 attest reverted (tx {tx_hash.hex()})")
+        return TxReceipt(
+            tx_hash=tx_hash.hex(),
+            block_number=receipt.blockNumber,
+            gas_used=receipt.gasUsed,
+            status=receipt.status,
+        )
+
     def flag_project(self, project_id: bytes, reason: str) -> TxReceipt:
         self._require()
         return self._send(self.contract.functions.flagProject(project_id, reason))

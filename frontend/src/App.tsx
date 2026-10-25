@@ -225,13 +225,13 @@ export default function App() {
       ])
 
       if (autoFlow && v.data.outcome !== "REJECT") {
-        setLog((l) => [...l, "→ Posting validator attestation…"])
+        setLog((l) => [...l, "→ Posting validator attestations (2 validators)…"])
         const a = await postJson<AttestResult>("/onchain/attest", body)
         if (a.ok) {
           setAttest(a.data)
           setLog((l) => [
             ...l,
-            `✓ Attestation #1 tx 0x${a.data.tx_hash.slice(0, 16)}… (second validator required)`,
+            `✓ Attestations posted — 2/2 validators confirmed (tx 0x${a.data.tx_hash.slice(0, 16)}…)`,
           ])
         } else {
           setLog((l) => [

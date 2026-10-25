@@ -17,6 +17,7 @@ class Settings:
     private_key: str = os.environ.get("BACKEND_PRIVATE_KEY", "")
     chain_id: int = int(os.environ.get("CHAIN_ID", "31337"))
     satellite_mode: str = os.environ.get("SATELLITE_MODE", "fixture")  # fixture | live
+    validator2_private_key: str = os.environ.get("VALIDATOR2_PRIVATE_KEY", "")
     registry_corpus_path: str = os.environ.get(
         "REGISTRY_CORPUS_PATH", str(ROOT / "pipeline" / "data" / "registry_corpus.json")
     )
